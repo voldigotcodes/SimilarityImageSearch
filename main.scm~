@@ -1,0 +1,59 @@
+; Define a custom directory-list function
+(define (directory-list directory-path)
+  (let ((entries (scandir directory-path)))
+    (filter (lambda (entry) (not (or (string=? entry ".") (string=? entry ".."))))
+            entries)))
+
+; Define a custom path->string function
+(define (path->string path)
+  (if (function? 'path->string)
+      (path->string path)
+      (string-append path)))
+
+;; ; Define a custom path->string function
+;; (define (path->string path)
+;;   (if (function? 'path->string)
+;;       (path->string path)
+;;       (string-append path)))
+
+; get the list of all textfiles in a directory
+; (list-text-files-in-directory "C:\\Users\\Documents\\csi2520")
+(define (list-text-files-in-directory directory-path)
+  (filter (lambda (file)
+            (string-suffix? file ".txt"))
+          (map path->string
+               (directory-list directory-path))))
+
+; read a histogram textfile and returns the values in a list
+; (read-hist-file "C:\\Users\\Documents\\csi2520\\q00.jpg.txt")
+(define (read-hist-file filename) 
+(cdr (call-with-input-file filename
+  (lambda (p)
+    (let f ((x (read p)))
+      (if (eof-object? x) '() (cons x (f (read p)))))))))
+
+(define (comparaison-number h1 h2)
+  (cond
+   ((null? h1) 0)
+   ((> (car h1) (car h2))
+              (+ (car h2) (comparaison-number (cdr h1) (cdr h2))))
+   ((< (car h1) (car h2))
+              (+ (car h1) (comparaison-number (cdr h1) (cdr h2))))
+   (else (+ (car h1) (comparaison-number (cdr h1) (cdr h2))))
+  )  
+)
+
+(define (read-all-hist directory-path)
+  (let ((files (list-text-files-in-directory directory-path)))
+        (map (lambda (file) (cons file (read-hist-file file))) files)
+    )
+  )
+
+(define (comparaison-filename-pair query-image directory-path)
+  (let ((L (read-all-hist directory-path))
+    (query-image-hist (read-hist-file query-image)))
+    (map (lambda (filename-hist) (cons (comparaison-number query-image-hist (car(car filename-hist))) (car filename-hist))) (L))
+  ))
+
+(display (comparaison-filename-pair "queryImages/q00.jpg.txt" "imageDataset2_15_20"))
+
